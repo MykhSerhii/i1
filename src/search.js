@@ -2,12 +2,34 @@ let cities = [];
 let map = null;
 let baseUrl = '';
 
+// Latin → Cyrillic transliteration map (Ukrainian standard + common variants)
+const LATIN_TO_CYR = [
+  ['shch','щ'],['sch','щ'],['zh','ж'],['kh','х'],['ts','ц'],['ch','ч'],
+  ['sh','ш'],['yu','ю'],['ya','я'],['ye','є'],['yi','ї'],
+  ['a','а'],['b','б'],['v','в'],['h','г'],['g','г'],['d','д'],
+  ['e','е'],['z','з'],['y','и'],['i','и'],['j','й'],['k','к'],
+  ['l','л'],['m','м'],['n','н'],['o','о'],['p','п'],['r','р'],
+  ['s','с'],['t','т'],['u','у'],['f','ф'],['c','к'],['x','кс'],
+  ['q','к'],['w','в'],
+];
+
+function transliterate(str) {
+  let s = str.toLowerCase();
+  for (const [lat, cyr] of LATIN_TO_CYR) {
+    s = s.split(lat).join(cyr);
+  }
+  return s;
+}
+
 /**
- * Normalizes Ukrainian text for fuzzy search.
+ * Normalizes text for fuzzy search (handles both Cyrillic and Latin input).
  */
 function normalize(str) {
-  return str
-    .toLowerCase()
+  const s = str.toLowerCase();
+  // Detect if input contains Latin letters
+  const hasLatin = /[a-z]/.test(s);
+  const base = hasLatin ? transliterate(s) : s;
+  return base
     .replace(/ї/g, 'и')
     .replace(/і/g, 'и')
     .replace(/є/g, 'е')
