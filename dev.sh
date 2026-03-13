@@ -253,22 +253,18 @@ check_file "$PROJECT_DIR/src/worker-bundle.js" "src/worker-bundle.js"
 # =============================================================================
 step "Запуск застосунку"
 
-# Визначаємо шлях до electron
+# На Windows завжди використовуємо electron.exe напряму — .cmd через cmd.exe не працює в Git Bash
 if [ "$OS" = "windows" ]; then
-  ELECTRON_BIN="$PROJECT_DIR/node_modules/.bin/electron.cmd"
-  # У Git Bash .cmd файли запускаються через cmd.exe
-  ELECTRON_BIN_FALLBACK="$PROJECT_DIR/node_modules/electron/dist/electron.exe"
+  ELECTRON_BIN="$PROJECT_DIR/node_modules/electron/dist/electron.exe"
+elif [ "$OS" = "mac" ]; then
+  ELECTRON_BIN="$PROJECT_DIR/node_modules/.bin/electron"
 else
   ELECTRON_BIN="$PROJECT_DIR/node_modules/.bin/electron"
-  ELECTRON_BIN_FALLBACK=""
-fi
-
-if [ ! -f "$ELECTRON_BIN" ] && [ -n "$ELECTRON_BIN_FALLBACK" ] && [ -f "$ELECTRON_BIN_FALLBACK" ]; then
-  ELECTRON_BIN="$ELECTRON_BIN_FALLBACK"
 fi
 
 if [ ! -f "$ELECTRON_BIN" ]; then
-  error "Electron не знайдено. Спробуйте: npm install"
+  error "Electron не знайдено: $ELECTRON_BIN"
+  error "Спробуйте: npm install"
   exit 1
 fi
 
@@ -278,20 +274,16 @@ info "Логи: $LOG_DIR/"
 echo ""
 
 if [ "$OS" = "windows" ]; then
-  # На Windows запускаємо через cmd для .cmd скриптів
-  # або напряму через .exe
-  if [[ "$ELECTRON_BIN" == *.exe ]]; then
-    exec "$ELECTRON_BIN" "$PROJECT_DIR"
-  else
-    exec cmd.exe /c "$ELECTRON_BIN" "$PROJECT_DIR"
-  fi
+  # Запускаємо electron.exe напряму з поточної директорії
+  # Git Bash автоматично конвертує /c/... → C:\...
+  exec "$ELECTRON_BIN" .
 elif [ "$OS" = "linux" ]; then
   # На Linux (Docker/Xvfb) потрібні додаткові прапори
   if [ -z "$DISPLAY" ]; then
     export DISPLAY=:99
     warn "DISPLAY не встановлено, використовуємо :99 (Xvfb)"
   fi
-  exec "$ELECTRON_BIN" "$PROJECT_DIR" \
+  exec "$ELECTRON_BIN" . \
     --no-sandbox \
     --disable-gpu \
     --enable-unsafe-swiftshader \
