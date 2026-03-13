@@ -1,6 +1,6 @@
 import maplibregl from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
-import { createMapStyle } from './map-style.js';
+import { createStyle } from './map-style.js';
 import { initWorker, clearOverlay } from './elevation.js';
 import { PinManager } from './pins.js';
 import { MeasureTool } from './measure.js';
@@ -83,7 +83,7 @@ function showSetupScreen(fileStatus) {
  * Initializes the MapLibre GL map.
  */
 function initMap(basemapUrl, terrainUrl, fontsUrl) {
-  const style = createMapStyle({ basemapUrl, terrainUrl, fontsUrl });
+  const style = createStyle({ basemapUrl, terrainUrl, fontsUrl });
 
   map = new maplibregl.Map({
     container: 'map',

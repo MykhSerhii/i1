@@ -1,322 +1,283 @@
 /**
- * Generates a MapLibre GL style for Ukraine using OpenMapTiles schema (Protomaps).
- * @param {Object} params
- * @param {string} params.basemapUrl - PMTiles URL for vector basemap
- * @param {string} params.terrainUrl - PMTiles URL for terrain raster-dem
- * @param {string} params.fontsUrl - Base URL for glyph fonts
- * @returns {Object} MapLibre GL style object
+ * MapLibre GL style for Protomaps basemap schema.
+ * Layer names: earth, water, landcover, landuse, roads, boundaries, places, buildings, pois
  */
-export function createMapStyle({ basemapUrl, terrainUrl, fontsUrl }) {
+export function createStyle({ basemapUrl, terrainUrl, fontsUrl }) {
   return {
     version: 8,
+    name: 'Ukraine Topo',
     glyphs: `${fontsUrl}/{fontstack}/{range}.pbf`,
+    sprite: '',
     sources: {
       basemap: {
         type: 'vector',
         url: basemapUrl,
-        attribution: '© OpenStreetMap contributors, Protomaps'
+        maxzoom: 14,
       },
       'terrain-src': {
         type: 'raster-dem',
         url: terrainUrl,
         encoding: 'terrarium',
-        tileSize: 512
-      }
+        tileSize: 256,
+        maxzoom: 12,
+      },
     },
-    terrain: null, // will be set in 3D mode
     layers: [
-      // 1. Background
+      // Ocean background
       {
         id: 'background',
         type: 'background',
-        paint: {
-          'background-color': '#f5f3ef'
-        }
+        paint: { 'background-color': '#a8c8e8' },
       },
 
-      // 2. Water fill
+      // Land (earth layer replaces background for land areas)
+      {
+        id: 'earth',
+        type: 'fill',
+        source: 'basemap',
+        'source-layer': 'earth',
+        paint: { 'fill-color': '#f0ece3' },
+      },
+
+      // Water fill
       {
         id: 'water',
         type: 'fill',
         source: 'basemap',
         'source-layer': 'water',
-        paint: {
-          'fill-color': '#a8c8e8',
-          'fill-opacity': 1
-        }
+        paint: { 'fill-color': '#a8c8e8' },
       },
 
-      // 3. Landcover grass
+      // Waterways (rivers/canals stored as lines in water layer)
       {
-        id: 'landcover-grass',
-        type: 'fill',
+        id: 'waterway',
+        type: 'line',
         source: 'basemap',
-        'source-layer': 'landcover',
-        filter: ['in', 'class', 'grass', 'meadow', 'farmland'],
+        'source-layer': 'water',
+        filter: ['in', 'kind', 'river', 'stream', 'canal', 'drain', 'ditch'],
         paint: {
-          'fill-color': '#daf0c0',
-          'fill-opacity': 0.8
-        }
+          'line-color': '#a8c8e8',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 0.5, 14, 2.5],
+        },
       },
 
-      // 4. Landcover forest
+      // Landcover – forest
       {
         id: 'landcover-forest',
         type: 'fill',
         source: 'basemap',
         'source-layer': 'landcover',
-        filter: ['in', 'class', 'wood', 'forest'],
-        paint: {
-          'fill-color': '#b8d4a0',
-          'fill-opacity': 0.7
-        }
+        filter: ['in', 'kind', 'forest', 'wood'],
+        paint: { 'fill-color': '#c8dbb3', 'fill-opacity': 0.7 },
       },
 
-      // 5. Landuse residential
+      // Landcover – grass / scrub / farmland
+      {
+        id: 'landcover-grass',
+        type: 'fill',
+        source: 'basemap',
+        'source-layer': 'landcover',
+        filter: ['in', 'kind', 'grass', 'scrub', 'farmland', 'crop'],
+        paint: { 'fill-color': '#dcecc5', 'fill-opacity': 0.5 },
+      },
+
+      // Landuse – residential
       {
         id: 'landuse-residential',
         type: 'fill',
         source: 'basemap',
         'source-layer': 'landuse',
-        filter: ['==', 'class', 'residential'],
-        paint: {
-          'fill-color': '#e8e4dc',
-          'fill-opacity': 0.7
-        }
+        filter: ['in', 'kind', 'residential', 'suburb', 'neighbourhood'],
+        paint: { 'fill-color': '#e8e4dc', 'fill-opacity': 0.6 },
       },
 
-      // 6. Waterway lines
+      // Landuse – industrial / commercial
       {
-        id: 'waterway',
-        type: 'line',
+        id: 'landuse-industrial',
+        type: 'fill',
         source: 'basemap',
-        'source-layer': 'waterway',
-        paint: {
-          'line-color': '#7ab4d8',
-          'line-width': [
-            'interpolate', ['linear'], ['zoom'],
-            8, 0.5,
-            12, 1.5,
-            16, 3
-          ]
-        }
+        'source-layer': 'landuse',
+        filter: ['in', 'kind', 'industrial', 'commercial', 'retail'],
+        paint: { 'fill-color': '#ddd8cc', 'fill-opacity': 0.5 },
       },
 
-      // 7. Hillshade
+      // Hillshade – visible in both 2D and 3D
       {
         id: 'hillshade',
         type: 'hillshade',
         source: 'terrain-src',
         paint: {
-          'hillshade-exaggeration': 0.35,
           'hillshade-illumination-direction': 315,
-          'hillshade-shadow-color': 'rgba(0, 0, 0, 0.35)',
-          'hillshade-highlight-color': 'rgba(255, 255, 255, 0.5)'
-        }
+          'hillshade-exaggeration': 0.35,
+          'hillshade-shadow-color': '#3a3a3a',
+          'hillshade-highlight-color': '#ffffff',
+        },
       },
 
-      // 8. Roads - service
+      // Roads – service / path / track
       {
         id: 'road-service',
         type: 'line',
         source: 'basemap',
-        'source-layer': 'transportation',
+        'source-layer': 'roads',
+        filter: ['in', 'kind', 'service', 'track', 'path', 'footway', 'cycleway'],
         minzoom: 13,
-        filter: ['==', 'class', 'service'],
         paint: {
           'line-color': '#ffffff',
-          'line-width': 1.5
-        }
+          'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.5, 16, 1.5],
+        },
       },
 
-      // 9. Roads - minor
+      // Roads – minor / tertiary
       {
         id: 'road-minor',
         type: 'line',
         source: 'basemap',
-        'source-layer': 'transportation',
+        'source-layer': 'roads',
+        filter: ['in', 'kind', 'minor_road', 'tertiary'],
         minzoom: 11,
-        filter: ['in', 'class', 'minor', 'path', 'track'],
         paint: {
           'line-color': '#ffffff',
-          'line-width': [
-            'interpolate', ['linear'], ['zoom'],
-            11, 0.8,
-            14, 2,
-            18, 4
-          ]
-        }
+          'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.8, 14, 3],
+        },
       },
 
-      // 10. Roads - secondary
+      // Roads – secondary
       {
         id: 'road-secondary',
         type: 'line',
         source: 'basemap',
-        'source-layer': 'transportation',
-        filter: ['in', 'class', 'secondary', 'tertiary'],
+        'source-layer': 'roads',
+        filter: ['==', 'kind', 'secondary'],
+        minzoom: 9,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#ffffff',
-          'line-width': [
-            'interpolate', ['linear'], ['zoom'],
-            8, 0.5,
-            12, 2,
-            16, 5
-          ]
-        }
+          'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1, 14, 5],
+        },
       },
 
-      // 11. Roads - primary
+      // Roads – primary
       {
         id: 'road-primary',
         type: 'line',
         source: 'basemap',
-        'source-layer': 'transportation',
-        filter: ['==', 'class', 'primary'],
+        'source-layer': 'roads',
+        filter: ['==', 'kind', 'primary'],
+        minzoom: 7,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#f9d84b',
-          'line-width': [
-            'interpolate', ['linear'], ['zoom'],
-            6, 0.8,
-            10, 2.5,
-            16, 7
-          ]
-        }
+          'line-width': ['interpolate', ['linear'], ['zoom'], 7, 1.5, 14, 7],
+        },
       },
 
-      // 12. Roads - motorway
+      // Roads – motorway / trunk
       {
         id: 'road-motorway',
         type: 'line',
         source: 'basemap',
-        'source-layer': 'transportation',
+        'source-layer': 'roads',
+        filter: ['in', 'kind', 'motorway', 'trunk'],
         minzoom: 6,
-        filter: ['in', 'class', 'motorway', 'trunk'],
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#e8a020',
-          'line-width': [
-            'interpolate', ['linear'], ['zoom'],
-            6, 1,
-            10, 3,
-            16, 9
-          ]
-        }
+          'line-width': ['interpolate', ['linear'], ['zoom'], 6, 1.5, 14, 9],
+        },
       },
 
-      // 13. Country boundary
+      // Boundaries – country
       {
         id: 'boundary-country',
         type: 'line',
         source: 'basemap',
-        'source-layer': 'boundary',
-        filter: ['==', 'admin_level', 2],
+        'source-layer': 'boundaries',
+        filter: ['==', 'kind', 'country'],
         paint: {
-          'line-color': '#9b7040',
-          'line-width': [
-            'interpolate', ['linear'], ['zoom'],
-            3, 1,
-            8, 2.5
-          ],
-          'line-dasharray': [4, 3]
-        }
+          'line-color': '#a06010',
+          'line-width': 2,
+          'line-dasharray': [4, 2],
+        },
       },
 
-      // 14. Region/Oblast boundary
+      // Boundaries – region (oblast)
       {
         id: 'boundary-region',
         type: 'line',
         source: 'basemap',
-        'source-layer': 'boundary',
+        'source-layer': 'boundaries',
+        filter: ['==', 'kind', 'region'],
         minzoom: 6,
-        filter: ['==', 'admin_level', 4],
         paint: {
-          'line-color': '#aaaaaa',
-          'line-width': [
-            'interpolate', ['linear'], ['zoom'],
-            6, 0.5,
-            10, 1.5
-          ],
-          'line-dasharray': [3, 3]
-        }
+          'line-color': '#999999',
+          'line-width': 0.8,
+          'line-dasharray': [3, 2],
+        },
       },
 
-      // 15. City labels
+      // Cities
       {
         id: 'place-city',
         type: 'symbol',
         source: 'basemap',
-        'source-layer': 'place',
-        filter: ['in', 'class', 'city', 'capital'],
+        'source-layer': 'places',
+        filter: ['in', 'kind', 'city'],
+        minzoom: 5,
         layout: {
           'text-field': ['coalesce', ['get', 'name:uk'], ['get', 'name']],
           'text-font': ['Noto Sans Bold'],
-          'text-size': [
-            'interpolate', ['linear'], ['zoom'],
-            5, 10,
-            8, 13,
-            12, 16
-          ],
-          'text-anchor': 'center',
-          'text-max-width': 10
+          'text-size': ['interpolate', ['linear'], ['zoom'], 5, 12, 12, 18],
+          'text-max-width': 8,
         },
         paint: {
-          'text-color': '#1a1a2e',
-          'text-halo-color': 'rgba(255, 255, 255, 0.85)',
-          'text-halo-width': 1.5
-        }
+          'text-color': '#222222',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 2,
+        },
       },
 
-      // 16. Town labels
+      // Towns
       {
         id: 'place-town',
         type: 'symbol',
         source: 'basemap',
-        'source-layer': 'place',
+        'source-layer': 'places',
+        filter: ['in', 'kind', 'town'],
         minzoom: 8,
-        filter: ['==', 'class', 'town'],
         layout: {
           'text-field': ['coalesce', ['get', 'name:uk'], ['get', 'name']],
           'text-font': ['Noto Sans Regular'],
-          'text-size': [
-            'interpolate', ['linear'], ['zoom'],
-            8, 10,
-            12, 13
-          ],
-          'text-anchor': 'center',
-          'text-max-width': 8
+          'text-size': ['interpolate', ['linear'], ['zoom'], 8, 11, 14, 15],
+          'text-max-width': 8,
         },
         paint: {
-          'text-color': '#333344',
-          'text-halo-color': 'rgba(255, 255, 255, 0.8)',
-          'text-halo-width': 1.2
-        }
+          'text-color': '#333333',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1.5,
+        },
       },
 
-      // 17. Village labels
+      // Villages / suburbs
       {
         id: 'place-village',
         type: 'symbol',
         source: 'basemap',
-        'source-layer': 'place',
+        'source-layer': 'places',
+        filter: ['in', 'kind', 'village', 'hamlet', 'suburb'],
         minzoom: 11,
-        filter: ['in', 'class', 'village', 'hamlet', 'suburb'],
         layout: {
           'text-field': ['coalesce', ['get', 'name:uk'], ['get', 'name']],
           'text-font': ['Noto Sans Regular'],
-          'text-size': [
-            'interpolate', ['linear'], ['zoom'],
-            11, 9,
-            14, 12
-          ],
-          'text-anchor': 'center',
-          'text-max-width': 6
+          'text-size': 11,
+          'text-max-width': 6,
         },
         paint: {
-          'text-color': '#444455',
-          'text-halo-color': 'rgba(255, 255, 255, 0.75)',
-          'text-halo-width': 1
-        }
-      }
-    ]
+          'text-color': '#555555',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1.5,
+        },
+      },
+    ],
   };
 }
