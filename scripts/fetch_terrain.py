@@ -20,10 +20,23 @@ TILE_URL = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.
 BBOX = (22.0, 44.0, 41.0, 53.0)  # west, south, east, north
 MIN_ZOOM = 0
 MAX_ZOOM = 11
-OUTPUT_MBTILES = "/home/devuser/i1/data/ukraine-terrain.mbtiles"
-OUTPUT_PMTILES = "/home/devuser/i1/data/ukraine-terrain.pmtiles"
-PMTILES_BIN = "/home/devuser/i1/tools/pmtiles"
 MAX_WORKERS = 64
+
+# Paths — визначаємо відносно скрипту, підтримує Windows і Linux
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_DIR = os.path.dirname(_SCRIPT_DIR)
+_DATA_DIR = os.path.join(_PROJECT_DIR, "data")
+_TOOLS_DIR = os.path.join(_PROJECT_DIR, "tools")
+
+OUTPUT_MBTILES = os.path.join(_DATA_DIR, "ukraine-terrain.mbtiles")
+OUTPUT_PMTILES = os.path.join(_DATA_DIR, "ukraine-terrain.pmtiles")
+
+# pmtiles binary: env змінна має пріоритет (встановлюється з dev.sh)
+_pmtiles_exe = "pmtiles.exe" if sys.platform == "win32" else "pmtiles"
+PMTILES_BIN = os.environ.get(
+    "PMTILES_BIN",
+    os.path.join(_TOOLS_DIR, _pmtiles_exe)
+)
 
 
 def lon_to_tile_x(lon, zoom):
