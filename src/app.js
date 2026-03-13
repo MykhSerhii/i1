@@ -356,12 +356,7 @@ function initUI() {
 
       if (action === 'add-pin' && pendingContextMenuLngLat) {
         const { lat, lng } = pendingContextMenuLngLat;
-        try {
-          await pinManager.addPin(lat, lng);
-          showNotification(`Пін додано: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, 'success');
-        } catch (err) {
-          showNotification('Помилка при додаванні піна', 'error');
-        }
+        showCoordsModal(lat, lng);
       }
     });
   }

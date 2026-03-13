@@ -46,7 +46,40 @@ export function createStyle({ basemapUrl, terrainUrl, fontsUrl }) {
         type: 'fill',
         source: 'basemap',
         'source-layer': 'water',
+        filter: ['!=', 'kind', 'river'],   // exclude rivers — handled separately below
         paint: { 'fill-color': '#a8ccdf' },
+      },
+
+      // River polygons — only at zoom 14+ where OSM data is detailed enough
+      {
+        id: 'water-river',
+        type: 'fill',
+        source: 'basemap',
+        'source-layer': 'water',
+        filter: ['==', 'kind', 'river'],
+        minzoom: 14,
+        paint: { 'fill-color': '#a8ccdf' },
+      },
+
+      // Rivers as lines at zoom < 14 (avoids badly-shaped OSM river polygons)
+      {
+        id: 'waterway-river',
+        type: 'line',
+        source: 'basemap',
+        'source-layer': 'water',
+        filter: ['==', 'kind', 'river'],
+        maxzoom: 14,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': '#a8ccdf',
+          'line-width': ['interpolate', ['linear'], ['zoom'],
+            6, 1,
+            8, 2,
+            10, 4,
+            12, 8,
+            14, 14,
+          ],
+        },
       },
 
       // Water outline (thin shoreline stroke for cleaner edges)
