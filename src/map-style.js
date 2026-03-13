@@ -23,14 +23,15 @@ export function createStyle({ basemapUrl, terrainUrl, fontsUrl }) {
       },
     },
     layers: [
-      // Ocean / world background
+      // Background = land color. Any gap in the earth polygon will look
+      // like land (beige), not water (blue) — prevents false "water" artifacts.
       {
         id: 'background',
         type: 'background',
-        paint: { 'background-color': '#b8d4e8' },
+        paint: { 'background-color': '#eae6dd' },
       },
 
-      // Land (earth layer)
+      // Land fill (same color as background — earth polygons confirm coverage)
       {
         id: 'earth',
         type: 'fill',
