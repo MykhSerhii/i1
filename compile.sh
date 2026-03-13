@@ -97,6 +97,12 @@ info "Вивід: $OUTPUT_DIR/map.exe"
 info "Це може зайняти 2-5 хв (перший раз довше — завантажує Electron binaries)..."
 echo ""
 
+# Відключаємо code signing через env змінні — без цього electron-builder
+# намагається розпакувати winCodeSign і падає через відсутність прав symlink
+export CSC_IDENTITY_AUTO_DISCOVERY=false
+export CSC_LINK=""
+export WIN_CSC_LINK=""
+
 # Запуск electron-builder
 node_modules/.bin/electron-builder --win portable --x64 \
   2>&1 | tee "$LOG_DIR/compile.log"

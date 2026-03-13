@@ -2,6 +2,7 @@
   "name": "ukraine-map",
   "version": "1.0.0",
   "description": "Офлайн карта висот України",
+  "author": "Ukraine Map",
   "main": "main.js",
   "scripts": {
     "postinstall": "node scripts/download_fonts.js",
