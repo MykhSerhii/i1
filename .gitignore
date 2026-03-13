@@ -1,0 +1,9 @@
+node_modules/
+dist-electron/
+data/*.pmtiles
+src/bundle.js
+src/bundle.js.map
+src/worker-bundle.js
+src/worker-bundle.js.map
+*.tif
+terrain_tiles/

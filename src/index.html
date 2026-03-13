@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Карта висот України</title>
+  <link rel="stylesheet" href="../node_modules/maplibre-gl/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Main map container -->
+  <div id="map"></div>
+
+  <!-- Setup screen (shown when data files are missing) -->
+  <div id="setup-screen" class="hidden">
+    <div class="setup-content">
+      <div class="setup-icon">🗺️</div>
+      <h1>Карта висот України</h1>
+      <p class="setup-subtitle">Для роботи програми потрібні файли даних</p>
+
+      <div id="setup-missing-files" class="setup-files">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="setup-instructions">
+        <h3>Як отримати файли:</h3>
+
+        <div class="setup-step">
+          <span class="step-num">1</span>
+          <div>
+            <strong>Базова карта (ukraine.pmtiles)</strong>
+            <p>Завантажте з <a href="https://protomaps.com/downloads/osm" target="_blank">protomaps.com/downloads/osm</a></p>
+            <p>Або використайте команду:</p>
+            <code>pmtiles extract https://maps.protomaps.com/builds/latest.pmtiles data/ukraine.pmtiles --bbox=22.0,44.0,40.0,52.8</code>
+          </div>
+        </div>
+
+        <div class="setup-step">
+          <span class="step-num">2</span>
+          <div>
+            <strong>Дані висот (ukraine-terrain.pmtiles)</strong>
+            <p>Запустіть скрипт обробки:</p>
+            <code>python scripts/download_data.py</code>
+          </div>
+        </div>
+
+        <div class="setup-step">
+          <span class="step-num">3</span>
+          <div>
+            <strong>Розмістіть обидва файли в папці:</strong>
+            <code id="setup-data-dir"></code>
+          </div>
+        </div>
+      </div>
+
+      <button id="setup-retry" class="btn btn-primary">Перевірити знову</button>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div id="toolbar" class="toolbar hidden">
+    <div class="toolbar-brand">
+      <span class="toolbar-title">Карта висот</span>
+    </div>
+    <div class="toolbar-actions">
+      <button id="btn-toggle-3d" class="btn btn-tool" title="Перемкнути 2D/3D">
+        <span class="btn-icon">⛰</span>
+        <span class="btn-label">3D</span>
+      </button>
+      <button id="btn-measure" class="btn btn-tool" title="Виміряти відстань">
+        <span class="btn-icon">📏</span>
+        <span class="btn-label">Відстань</span>
+      </button>
+      <button id="btn-add-coords" class="btn btn-tool" title="Додати пін за координатами">
+        <span class="btn-icon">📍</span>
+        <span class="btn-label">Додати пін</span>
+      </button>
+      <button id="btn-clear-pins" class="btn btn-tool btn-danger" title="Видалити всі піни">
+        <span class="btn-icon">🗑</span>
+        <span class="btn-label">Очистити</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Pins panel (right sidebar) -->
+  <div id="pins-panel" class="pins-panel hidden">
+    <div class="panel-header">
+      <h3>Піни спостереження</h3>
+      <span id="pins-count" class="pins-count">0</span>
+    </div>
+    <div id="pins-list" class="pins-list">
+      <div class="pins-empty">
+        <p>Немає активних пінів</p>
+        <p class="hint">Клацніть правою кнопкою миші на карті, щоб додати пін</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distance measurement display -->
+  <div id="distance-display" class="distance-display hidden">
+    <div class="distance-content">
+      <span class="distance-label">Відстань:</span>
+      <span id="distance-value" class="distance-value">0 м</span>
+      <button id="btn-measure-clear" class="btn btn-sm">Очистити</button>
+      <button id="btn-measure-done" class="btn btn-sm btn-primary">Завершити</button>
+    </div>
+  </div>
+
+  <!-- Context menu -->
+  <div id="context-menu" class="context-menu hidden">
+    <ul id="context-menu-items">
+      <!-- Populated dynamically -->
+    </ul>
+  </div>
+
+  <!-- Add by coordinates modal -->
+  <div id="coords-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Додати пін за координатами</h3>
+        <button id="modal-close" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="input-lat">Широта (Lat)</label>
+          <input type="number" id="input-lat" class="form-input"
+                 placeholder="напр. 50.4501" min="-90" max="90" step="0.000001">
+        </div>
+        <div class="form-group">
+          <label for="input-lng">Довгота (Lng)</label>
+          <input type="number" id="input-lng" class="form-input"
+                 placeholder="напр. 30.5234" min="-180" max="180" step="0.000001">
+        </div>
+        <div class="form-group">
+          <label for="input-height">Висота спостерігача (м над рельєфом)</label>
+          <input type="number" id="input-height" class="form-input"
+                 placeholder="10" value="10" min="0" max="9999" step="1">
+        </div>
+        <div class="form-group">
+          <label for="input-radius">Радіус (км)</label>
+          <input type="number" id="input-radius" class="form-input"
+                 placeholder="30" value="30" min="1" max="500" step="1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="modal-cancel" class="btn">Скасувати</button>
+        <button id="modal-submit" class="btn btn-primary">Додати пін</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification area -->
+  <div id="notifications" class="notifications"></div>
+
+  <!-- Loading indicator -->
+  <div id="overlay-loading" class="overlay-loading hidden">
+    <div class="spinner"></div>
+    <span>Обчислення видимості...</span>
+  </div>
+
+  <script src="bundle.js"></script>
+</body>
+</html>
