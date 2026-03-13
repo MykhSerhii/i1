@@ -432,7 +432,9 @@ async function main() {
   map.on('load', async () => {
     // Initialize elevation worker
     try {
-      await initWorker(terrainUrl);
+      // PMTiles library needs plain HTTP URL, not pmtiles:// protocol prefix
+      const terrainHttpUrl = terrainUrl.replace(/^pmtiles:\/\//, '');
+      await initWorker(terrainHttpUrl);
     } catch (err) {
       console.warn('Terrain worker initialization failed:', err.message);
       showNotification(
