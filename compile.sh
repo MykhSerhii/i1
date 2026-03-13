@@ -125,7 +125,26 @@ node_modules/.bin/electron-packager . map \
   2>&1 | tee "$LOG_DIR/compile.log"
 
 # =============================================================================
-# 6. Результат
+# 6. Копіюємо папку data/ в дистрибутив
+# =============================================================================
+step "Копіювання data/"
+
+DATA_SRC="$PROJECT_DIR/data"
+DATA_DST="$PACK_OUT/data"
+
+if [ -d "$DATA_SRC" ]; then
+  info "Копіювання $DATA_SRC → $DATA_DST ..."
+  rm -rf "$DATA_DST"
+  cp -r "$DATA_SRC" "$DATA_DST"
+  DATA_SIZE=$(du -sh "$DATA_DST" | cut -f1)
+  success "data/ скопійовано ($DATA_SIZE)"
+else
+  warn "Папка data/ не знайдена — пропускаємо"
+  warn "Скопіюйте data/ вручну поруч з map.exe після збірки"
+fi
+
+# =============================================================================
+# 7. Результат
 # =============================================================================
 step "Результат"
 
@@ -138,16 +157,10 @@ if [ -f "$EXE_FILE" ]; then
   echo -e "${BOLD}  Папка:${NC} $PACK_OUT/"
   echo -e "${BOLD}  Exe:${NC}   $EXE_FILE"
   echo ""
-  echo -e "${BOLD}  Щоб розповсюдити:${NC}"
-  echo "  1. Скопіюйте всю папку map-win32-x64/ куди завгодно"
-  echo "  2. Поруч з map.exe покладіть папку data/:"
-  echo ""
   echo -e "  ${YELLOW}map-win32-x64/${NC}"
   echo "  ├── map.exe                    ← запускати це"
-  echo "  ├── ... (Electron runtime)"
-  echo "  └── data/                      ← скопіювати сюди"
-  echo "      ├── ukraine.pmtiles        (~2 GB)"
-  echo "      └── ukraine-terrain.pmtiles (~540 MB)"
+  echo "  ├── resources/public/          (шрифти)"
+  echo "  └── data/                      (карта і рельєф)"
   echo ""
 else
   error "map.exe не знайдено після збірки!"
