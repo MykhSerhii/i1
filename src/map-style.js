@@ -69,7 +69,7 @@ export function createStyle({ basemapUrl, terrainUrl, fontsUrl }) {
         source: 'basemap',
         'source-layer': 'landuse',
         filter: ['in', 'kind', 'residential', 'suburb', 'neighbourhood'],
-        paint: { 'fill-color': '#d8d8d8', 'fill-opacity': 0.65 },
+        paint: { 'fill-color': '#b8b8b8', 'fill-opacity': 0.55 },
       },
 
       // Industrial / commercial
