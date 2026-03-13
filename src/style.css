@@ -183,6 +183,31 @@ html, body {
   opacity: 0.6;
 }
 
+.search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.search-clear:hover {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+
 .search-dropdown {
   position: absolute;
   top: calc(100% + 4px);

@@ -36,20 +36,39 @@ export async function initSearch(mapInstance, serverBaseUrl) {
   const dropdown = document.getElementById('search-dropdown');
   if (!input || !dropdown) return;
 
+  const clearBtn = document.getElementById('search-clear');
+
+  function updateClear() {
+    if (clearBtn) {
+      clearBtn.classList.toggle('hidden', input.value.length === 0);
+    }
+  }
+
+  function clearSearch() {
+    input.value = '';
+    dropdown.classList.add('hidden');
+    updateClear();
+    input.focus();
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', clearSearch);
+  }
+
   input.addEventListener('input', () => {
+    updateClear();
     const q = input.value.trim();
     if (q.length < 2) {
       dropdown.classList.add('hidden');
       return;
     }
     const results = search(q);
-    renderDropdown(results, dropdown, input);
+    renderDropdown(results, dropdown, input, updateClear);
   });
 
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      input.value = '';
-      dropdown.classList.add('hidden');
+      clearSearch();
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       const first = dropdown.querySelector('.search-result');
@@ -81,7 +100,7 @@ function flyTo(city) {
   });
 }
 
-function renderDropdown(results, dropdown, input) {
+function renderDropdown(results, dropdown, input, updateClear) {
   if (results.length === 0) {
     dropdown.classList.add('hidden');
     return;
@@ -101,12 +120,14 @@ function renderDropdown(results, dropdown, input) {
       flyTo(results[i]);
       input.value = results[i].name;
       dropdown.classList.add('hidden');
+      updateClear();
     });
     el.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         flyTo(results[i]);
         input.value = results[i].name;
         dropdown.classList.add('hidden');
+        updateClear();
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
         const next = el.nextElementSibling;
