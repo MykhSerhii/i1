@@ -40,13 +40,57 @@ export function createStyle({ basemapUrl, terrainUrl, fontsUrl }) {
         paint: { 'fill-color': '#eae6dd' },
       },
 
-      // Water bodies
+      // ── LANDCOVER / LANDUSE (must be BELOW water layers) ─────────────────
+
+      // Forests / woods
+      {
+        id: 'landcover-forest',
+        type: 'fill',
+        source: 'basemap',
+        'source-layer': 'landcover',
+        filter: ['in', 'kind', 'forest', 'wood'],
+        paint: { 'fill-color': '#b8d4a0', 'fill-opacity': 0.75 },
+      },
+
+      // Grass / farmland / scrub
+      {
+        id: 'landcover-grass',
+        type: 'fill',
+        source: 'basemap',
+        'source-layer': 'landcover',
+        filter: ['in', 'kind', 'grass', 'scrub', 'farmland', 'crop'],
+        paint: { 'fill-color': '#d8e8c0', 'fill-opacity': 0.6 },
+      },
+
+      // Residential areas — light grey
+      {
+        id: 'landuse-residential',
+        type: 'fill',
+        source: 'basemap',
+        'source-layer': 'landuse',
+        filter: ['in', 'kind', 'residential', 'suburb', 'neighbourhood'],
+        paint: { 'fill-color': '#d8d8d8', 'fill-opacity': 0.65 },
+      },
+
+      // Industrial / commercial
+      {
+        id: 'landuse-industrial',
+        type: 'fill',
+        source: 'basemap',
+        'source-layer': 'landuse',
+        filter: ['in', 'kind', 'industrial', 'commercial', 'retail'],
+        paint: { 'fill-color': '#cec8c0', 'fill-opacity': 0.6 },
+      },
+
+      // ── WATER (above landuse so rivers draw over residential zones) ───────
+
+      // Water bodies (lakes, seas, ponds — not rivers)
       {
         id: 'water',
         type: 'fill',
         source: 'basemap',
         'source-layer': 'water',
-        filter: ['!=', 'kind', 'river'],   // exclude rivers — handled separately below
+        filter: ['!=', 'kind', 'river'],
         paint: { 'fill-color': '#a8ccdf' },
       },
 
@@ -96,9 +140,7 @@ export function createStyle({ basemapUrl, terrainUrl, fontsUrl }) {
         },
       },
 
-      // Small waterways as lines (streams, canals only — NOT rivers,
-      // because wide rivers are already fill polygons and drawing a
-      // centerline on top creates a straight-edge artifact at tile seams)
+      // Small waterways (streams, canals)
       {
         id: 'waterway-small',
         type: 'line',
@@ -111,46 +153,6 @@ export function createStyle({ basemapUrl, terrainUrl, fontsUrl }) {
           'line-color': '#a8ccdf',
           'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.5, 16, 2],
         },
-      },
-
-      // Forests / woods
-      {
-        id: 'landcover-forest',
-        type: 'fill',
-        source: 'basemap',
-        'source-layer': 'landcover',
-        filter: ['in', 'kind', 'forest', 'wood'],
-        paint: { 'fill-color': '#b8d4a0', 'fill-opacity': 0.75 },
-      },
-
-      // Grass / farmland / scrub
-      {
-        id: 'landcover-grass',
-        type: 'fill',
-        source: 'basemap',
-        'source-layer': 'landcover',
-        filter: ['in', 'kind', 'grass', 'scrub', 'farmland', 'crop'],
-        paint: { 'fill-color': '#d8e8c0', 'fill-opacity': 0.6 },
-      },
-
-      // Residential areas — clearly visible grey blocks
-      {
-        id: 'landuse-residential',
-        type: 'fill',
-        source: 'basemap',
-        'source-layer': 'landuse',
-        filter: ['in', 'kind', 'residential', 'suburb', 'neighbourhood'],
-        paint: { 'fill-color': '#dedad2', 'fill-opacity': 0.8 },
-      },
-
-      // Industrial / commercial
-      {
-        id: 'landuse-industrial',
-        type: 'fill',
-        source: 'basemap',
-        'source-layer': 'landuse',
-        filter: ['in', 'kind', 'industrial', 'commercial', 'retail'],
-        paint: { 'fill-color': '#d4cec8', 'fill-opacity': 0.7 },
       },
 
       // Parks / recreation
