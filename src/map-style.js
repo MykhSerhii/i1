@@ -48,16 +48,34 @@ export function createStyle({ basemapUrl, terrainUrl, fontsUrl }) {
         paint: { 'fill-color': '#a8ccdf' },
       },
 
-      // Waterways as lines
+      // Water outline (thin shoreline stroke for cleaner edges)
       {
-        id: 'waterway',
+        id: 'water-outline',
         type: 'line',
         source: 'basemap',
         'source-layer': 'water',
-        filter: ['in', 'kind', 'river', 'stream', 'canal', 'drain', 'ditch'],
+        filter: ['!in', 'kind', 'river', 'stream', 'canal', 'drain', 'ditch'],
+        paint: {
+          'line-color': '#8ab8d0',
+          'line-width': 0.5,
+          'line-opacity': 0.6,
+        },
+      },
+
+      // Small waterways as lines (streams, canals only — NOT rivers,
+      // because wide rivers are already fill polygons and drawing a
+      // centerline on top creates a straight-edge artifact at tile seams)
+      {
+        id: 'waterway-small',
+        type: 'line',
+        source: 'basemap',
+        'source-layer': 'water',
+        filter: ['in', 'kind', 'stream', 'canal', 'drain', 'ditch'],
+        minzoom: 11,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#a8ccdf',
-          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 0.5, 14, 2.5],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.5, 16, 2],
         },
       },
 
