@@ -88,23 +88,40 @@ node scripts/build.js 2>&1 | tee "$LOG_DIR/build.log"
 success "src/bundle.js та src/worker-bundle.js готові"
 
 # =============================================================================
-# 5. Electron-builder → map.exe
+# 5. @electron/packager → map-win32-x64/ з map.exe всередині
 # =============================================================================
-step "Компіляція map.exe (electron-builder)"
+# Використовуємо @electron/packager замість electron-builder —
+# він НЕ використовує winCodeSign і не потребує прав адміністратора.
+step "Компіляція (electron-packager)"
 
-info "Ціль: Windows x64 portable"
-info "Вивід: $OUTPUT_DIR/map.exe"
+PACK_OUT="$OUTPUT_DIR/map-win32-x64"
+
+info "Ціль: Windows x64"
+info "Вивід: $PACK_OUT/"
 info "Це може зайняти 2-5 хв (перший раз довше — завантажує Electron binaries)..."
 echo ""
 
-# Відключаємо code signing через env змінні — без цього electron-builder
-# намагається розпакувати winCodeSign і падає через відсутність прав symlink
-export CSC_IDENTITY_AUTO_DISCOVERY=false
-export CSC_LINK=""
-export WIN_CSC_LINK=""
+# Очищаємо попередній білд
+rm -rf "$PACK_OUT"
 
-# Запуск electron-builder
-node_modules/.bin/electron-builder --win portable --x64 \
+node_modules/.bin/electron-packager . map \
+  --platform=win32 \
+  --arch=x64 \
+  --out="$OUTPUT_DIR" \
+  --overwrite \
+  --ignore="^/data($|/)" \
+  --ignore="^/logs($|/)" \
+  --ignore="^/tools($|/)" \
+  --ignore="^/scripts($|/)" \
+  --ignore="^/src($|/)" \
+  --ignore="^/\.git($|/)" \
+  --ignore="^/dist-electron($|/)" \
+  --ignore="dev\.sh$" \
+  --ignore="update\.sh$" \
+  --ignore="compile\.sh$" \
+  --ignore="README\.md$" \
+  --extra-resource="public" \
+  --app-version="1.0.0" \
   2>&1 | tee "$LOG_DIR/compile.log"
 
 # =============================================================================
@@ -112,22 +129,23 @@ node_modules/.bin/electron-builder --win portable --x64 \
 # =============================================================================
 step "Результат"
 
-EXE_FILE="$OUTPUT_DIR/map.exe"
+EXE_FILE="$PACK_OUT/map.exe"
 if [ -f "$EXE_FILE" ]; then
-  SIZE=$(du -sh "$EXE_FILE" | cut -f1)
+  SIZE=$(du -sh "$PACK_OUT" | cut -f1)
   echo ""
-  success "Готово! map.exe зібрано: $SIZE"
+  success "Готово! Папка зібрана: $SIZE"
   echo ""
-  echo -e "${BOLD}  Файл:${NC} $EXE_FILE"
+  echo -e "${BOLD}  Папка:${NC} $PACK_OUT/"
+  echo -e "${BOLD}  Exe:${NC}   $EXE_FILE"
   echo ""
-  echo -e "${BOLD}  Щоб запустити:${NC}"
-  echo "  1. Скопіюйте map.exe у будь-яку папку"
-  echo "  2. Поруч покладіть папку data/ (ukraine.pmtiles + ukraine-terrain.pmtiles)"
-  echo "  3. Запустіть map.exe"
+  echo -e "${BOLD}  Щоб розповсюдити:${NC}"
+  echo "  1. Скопіюйте всю папку map-win32-x64/ куди завгодно"
+  echo "  2. Поруч з map.exe покладіть папку data/:"
   echo ""
-  echo -e "  ${YELLOW}Структура поруч з .exe:${NC}"
-  echo "  ├── map.exe"
-  echo "  └── data/"
+  echo -e "  ${YELLOW}map-win32-x64/${NC}"
+  echo "  ├── map.exe                    ← запускати це"
+  echo "  ├── ... (Electron runtime)"
+  echo "  └── data/                      ← скопіювати сюди"
   echo "      ├── ukraine.pmtiles        (~2 GB)"
   echo "      └── ukraine-terrain.pmtiles (~540 MB)"
   echo ""
