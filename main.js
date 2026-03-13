@@ -23,8 +23,8 @@ function startExpressServer() {
       next();
     });
 
-    const dataDir = path.join(app.getAppPath(), 'data');
-    const publicDir = path.join(app.getAppPath(), 'public');
+    const dataDir = getDataDir();
+    const publicDir = getPublicDir();
 
     // Serve PMTiles and other data files
     expressApp.use('/data', express.static(dataDir, {
@@ -48,7 +48,19 @@ function startExpressServer() {
 }
 
 function getDataDir() {
-  return path.join(app.getAppPath(), 'data');
+  // Packaged: data/ must sit next to map.exe
+  // Dev: data/ is in the project root
+  return app.isPackaged
+    ? path.join(path.dirname(process.execPath), 'data')
+    : path.join(__dirname, 'data');
+}
+
+function getPublicDir() {
+  // Packaged: public/ is copied via extraResources → resources/public/
+  // Dev: public/ is in the project root
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'public')
+    : path.join(__dirname, 'public');
 }
 
 async function createWindow() {
