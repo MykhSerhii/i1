@@ -4,6 +4,7 @@ import { createStyle } from './map-style.js';
 import { initWorker, clearOverlay } from './elevation.js';
 import { PinManager } from './pins.js';
 import { MeasureTool } from './measure.js';
+import { initSearch } from './search.js';
 
 // Default settings
 const DEFAULT_RADIUS_KM = 30;
@@ -461,6 +462,9 @@ async function main() {
 
     // Wire up UI
     initUI();
+
+    // Initialize city search
+    initSearch(map, baseUrl);
 
     // Expose to window for debugging
     window.map = map;
